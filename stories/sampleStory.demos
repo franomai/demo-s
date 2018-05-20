@@ -1,18 +1,20 @@
+// Title
 Choose Your Own Adventure - by John Marsden.
 
+// Description
 This is just a demo story, used to demonstrate the functionality. All credits go to the original author!
 I still have my Kids' Night In! book, from years and years ago. Did you know that Anthony Horowitz wrote on this? How about that.
 
-1.
+1
 The phone rings. You pick it up. It's Captain Cook.
 'Listen,' he says, 'you interested in taking a trip? I'm going to discover Australia, leaving tomorrow. You want to come?'
 If you say 'yes', press :one:. If you say no, press :two:.
 
-// Next scene
+// Transitions
 :one: -> 2
 :two: -> 3
 
-2.
+2
 'Sure,' you say. 'I'll just go ask my mum.' You put down the phone. 'Mum,' you yell, 'Captain Cook's on the phone. Is it okay if I go and help discover Australia?'
 'How long will you be?' she yells back.
 'I don't know, about six months, I guess.'
@@ -24,11 +26,11 @@ Yikes, you think. The chef has a lot of work and if the sailors don't like the f
 
 If you say 'chef', press :cooking:. If you say 'look-out', press :eyes:.
 
-// Next scene
+// Transitions
 :cooking: -> 4
 :eyes: -> 5
 
-3.
+3
 'No way,' you tell the captain. 'There could be anything out there. Crocodiles and sharks and lamingtons and snakes.'
 'It's true, lamingtons do sound bad,' he admits.
 'Excuse me, but Hi-5's on TV. Find some other sucker to go with you,' you say, and slam down the phone.

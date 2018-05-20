@@ -25,8 +25,10 @@ function parseStory (story) {
   storyObj['scenes'] = {};
   var currentState = '';
   var currentText = '';
+  var lastScene = '';
+  story = story.replace(/\r/g, '');
   var lines = story.split('\n');
-  for (var lineNo = 0; lineNo < lines.length(); lineNo++) {
+  for (var lineNo = 0; lineNo < lines.length; lineNo++) {
     var line = lines[lineNo];
     var newState = determineState(line);
     if (newState !== 'NO STATE' && currentState !== newState) {
@@ -35,7 +37,7 @@ function parseStory (story) {
         case 'TITLE':
           // Got content with shape TITLE - AUTHOR
           var titleRegex = /((?:\w+\s*-?\s)*)\s*-\s*((?:\w+\s*)*)\.?\s*/g; // owo what's this?
-          var match = titleRegex.exec(line);
+          var match = titleRegex.exec(currentText);
           if (match) {
             storyObj['title'] = match[1];
             storyObj['author'] = match[2];
@@ -47,11 +49,13 @@ function parseStory (story) {
           var transitions = currentText.split('\n');
           for (var transitionIndex = 0; transitionIndex < transitions.length; transitionIndex++) {
             var transitionRegex = /:([\w_]*):\s*->\s*(\d*)/g;
-            var transMatch = transitionRegex.exec(line);
-            if (match) {
-              storyObj['scenes'][currentState]['transitions'][transMatch[1]] = transMatch[2];
+            var transMatch = transitionRegex.exec(transitions[transitionIndex]);
+            if (transMatch) {
+              storyObj['scenes'][lastScene]['transitions'][transMatch[1]] = transMatch[2];
             } else {
-              console.error('Transition not compliant!');
+              if (line !== '') {
+                console.error('Transition ' + line + ' not compliant!');
+              };
             }
           }
           break;
@@ -62,11 +66,14 @@ function parseStory (story) {
           if (currentState === '' || currentState === 'THE END') break;
           // Probably a number, hold it.
           if (!isNaN(currentState)) {
-            storyObj['scenes'][currentState]['story'] = currentText;
-            storyObj['scenes'][currentState]['transitions'] = {};
+            storyObj['scenes'][currentState] = {
+              story: currentText,
+              transitions: {}
+            };
+            lastScene = currentState;
           } else {
             // Uh oh
-            console.error('State not understood! Uh oh!');
+            console.error('State ' + currentState + ' not understood! Uh oh!');
           }
       }
       // Flush current buffer, no longer needed.
@@ -83,11 +90,12 @@ function parseStory (story) {
 }
 
 function determineState (line) {
+  if (line === '') return 'NO STATE';
   if (!isNaN(line)) {
     return parseInt(line);
   }
   // Use this for reading in state swaps from comments
-  var stateDeclareRegex = /^\/\/\s*((?:\w+\s*)*)$/g;
+  var stateDeclareRegex = /\/\/\s*((?:\w+\s*)*)/g;
   var match = stateDeclareRegex.exec(line);
   return match === null ? 'NO STATE' : match[1].trim().toUpperCase();
 }
