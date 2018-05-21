@@ -35,7 +35,7 @@ bot.on('message', function (message) {
 });
 
 bot.on('messageReactionAdd', function (messageReaction, user) {
-  console.log(messageReaction.emoji.name);
+  console.log(messageReaction.emoji.identifier );
   var message = messageReaction.message;
   var channelID = message.channel.id.toString();
   if (channelID in listeningTo) {
