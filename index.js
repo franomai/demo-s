@@ -1,20 +1,84 @@
 var Discord = require('discord.js');
 var fs = require('fs');
+var tr = require('./translations.json');
 var bot = new Discord.Client({autoReconnect: true});
 
 var stories = getStories('./stories');
+var listeningTo = {};
+
+bot.on('message', function (message) {
+  var channelId = message.channel.id.toString();
+  if (!message.author.bot && message.content === tr.intro) {
+    listeningTo[channelId] = {
+      messageId: null,
+      storyInFocus: null,
+      sceneInFocus: null
+    };
+    message.channel.send(tr.introResponse).then(function (message) {
+      message.channel.send(printStories(stories));
+    });
+  } else if (channelId in listeningTo) {
+    var channelInfo = listeningTo[channelId];
+    if (channelInfo['storyInFocus'] === null) {
+      var value = parseInt(message.content);
+      if (value <= stories.length && value > 0) {
+        // Fetch!
+        channelInfo['storyInFocus'] = stories[value - 1];
+        message.channel.send(tr.giveDescription + channelInfo['storyInFocus'].description + '\n' + tr.wbu).then(function (message) {
+          message.react('🙆');
+          message.react('🙅');
+          channelInfo['messageId'] = message.id;
+        });
+      }
+    }
+  }
+});
+
+bot.on('messageReactionAdd', function (messageReaction, user) {
+  var message = messageReaction.message;
+  var channelID = message.channel.id.toString();
+  if (channelID in listeningTo) {
+    var channelInfo = listeningTo[channelID];
+    if (channelInfo['messageId'] === message.id) {
+      if (channelInfo['storyInFocus'] !== null && channelInfo['sceneInFocus'] === null && !user.bot) {
+        if (messageReaction.emoji.name === '🙆') {
+          channelInfo['sceneInFocus'] = '1';
+          message.channel.send(tr.lki + channelInfo['storyInFocus']['scenes']['1']['story']).then(function (message) {
+            channelInfo['messageId'] = message.id;
+          });
+        } else if (messageReaction.emoji.name === '🙅') {
+          channelInfo['messageId'] = null;
+          channelInfo['storyInFocus'] = null;
+          message.channel.send(tr.naw).then(function (message) {
+            message.channel.send(printStories(stories));
+          });
+        }
+      }
+    }
+  }
+});
+
+function printStories (stories) {
+  var msg = '';
+  var story;
+  for (var i = 0; i < stories.length; i++) {
+    story = stories[i];
+    msg += '\n**' + (i + 1) + '. ' + story.title + '** - *' + story.author + '*';
+  }
+  return msg;
+}
 
 // Read everything into memory, move this out some other time.
 
 function getStories (dir) {
   var storyFiles = fs.readdirSync(dir);
-  var stories = {};
+  var stories = [];
   for (var storyFileIndex = 0; storyFileIndex < storyFiles.length; storyFileIndex++) {
     var story = storyFiles[storyFileIndex];
     var filename = dir + '/' + story;
     if (!fs.statSync(filename).isDirectory()) {
       var contents = fs.readFileSync(filename, 'utf8');
-      stories[filename] = parseStory(contents);
+      stories.push(parseStory(contents))
     }
   }
   return stories;
@@ -104,10 +168,4 @@ bot.login(process.env.TOKEN);
 
 bot.on('ready', function (event) {
   console.log('Logged in as %s - %s\n', bot.user.username, bot.user.id);
-});
-
-bot.on('message', function (message) {
-  if (!message.author.bot && message.content) {
-    message.channel.send('All systems are go!');
-  }
 });
