@@ -8,11 +8,11 @@ I still have my *Kids' Night In!* book, from years and years ago. Did you know t
 1
 The phone rings. You pick it up. It's Captain Cook.
 'Listen,' he says, 'you interested in taking a trip? I'm going to discover Australia, leaving tomorrow. You want to come?'
-If you say 'yes', press :one:. If you say no, press :two:.
+If you say 'yes', press ✅. If you say no, press 🚫.
 
 // Transitions
-:one: -> 2
-:two: -> 3
+✅ -> 2
+🚫 -> 3
 
 2
 'Sure,' you say. 'I'll just go ask my mum.' You put down the phone. 'Mum,' you yell, 'Captain Cook's on the phone. Is it okay if I go and help discover Australia?'
@@ -24,11 +24,11 @@ You tell Captain Cook.
 'Good. Now we've only got two vacancies left. Do you want to be the chef or the lookout? You'd better decide now, because there's this Sir Joseph Banks guy and he'll take the other spot.'
 Yikes, you think. The chef has a lot of work and if the sailors don't like the food they can get pretty upset. On the other hand the chef stays warm and dry, and never goes hungry. The lookout has to climb those tall masts, but it's a great view from up there.
 
-If you say 'chef', press :cooking:. If you say 'look-out', press :eyes:.
+If you say 'chef', press 🍳. If you say 'look-out', press 👀.
 
 // Transitions
-:cooking: -> 4
-:eyes: -> 5
+🍳 -> 4
+👀 -> 5
 
 3
 'No way,' you tell the captain. 'There could be anything out there. Crocodiles and sharks and lamingtons and snakes.'
@@ -36,4 +36,4 @@ If you say 'chef', press :cooking:. If you say 'look-out', press :eyes:.
 'Excuse me, but Hi-5's on TV. Find some other sucker to go with you,' you say, and slam down the phone.
 Little did you realise you've just turned down the chance to be in the history books!
 
-// The end
+THE END

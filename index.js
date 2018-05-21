@@ -35,18 +35,21 @@ bot.on('message', function (message) {
 });
 
 bot.on('messageReactionAdd', function (messageReaction, user) {
-  console.log(messageReaction.emoji.identifier );
   var message = messageReaction.message;
   var channelID = message.channel.id.toString();
   if (channelID in listeningTo) {
     var channelInfo = listeningTo[channelID];
-    if (channelInfo['messageId'] === message.id) {
-      if (channelInfo['storyInFocus'] !== null && !user.bot) {
+    if (channelInfo['messageId'] === message.id && !user.bot) {
+      if (channelInfo['storyInFocus'] !== null) {
         if (channelInfo['sceneInFocus'] === null) {
           if (messageReaction.emoji.name === '🙆') {
             channelInfo['sceneInFocus'] = '1';
-            message.channel.send(tr.lki + channelInfo['storyInFocus']['scenes']['1']['story']).then(function (message) {
+            message.channel.send(tr.lki + channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['story']).then(function (message) {
               channelInfo['messageId'] = message.id;
+              var emojis = Object.keys(channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['transitions']);
+              for (var i = 0; i < emojis.length; i++) {
+                message.react(emojis[i]);
+              }
             });
           } else if (messageReaction.emoji.name === '🙅') {
             channelInfo['messageId'] = null;
@@ -56,7 +59,18 @@ bot.on('messageReactionAdd', function (messageReaction, user) {
             });
           }
         } else {
-          // Pass
+          var nextScene = channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['transitions'][messageReaction.emoji.name];
+          if (nextScene) {
+            // Match found, go there
+            channelInfo['sceneInFocus'] = nextScene;
+            message.channel.send(channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['story']).then(function (message) {
+              channelInfo['messageId'] = message.id;
+              var emojis = Object.keys(channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['transitions']);
+              for (var i = 0; i < emojis.length; i++) {
+                message.react(emojis[i]);
+              }
+            });
+          }
         }
       }
     }
@@ -117,7 +131,8 @@ function parseStory (story) {
         case 'TRANSITIONS':
           var transitions = currentText.split('\n');
           for (var transitionIndex = 0; transitionIndex < transitions.length; transitionIndex++) {
-            var transitionRegex = /:([\w_]*):\s*->\s*(\d*)/g;
+            console.log(transitions[transitionIndex]);
+            var transitionRegex = /([^\u0000-\u007F]+)\s*->\s*(\d*)/g; // eslint-disable-line no-control-regex
             var transMatch = transitionRegex.exec(transitions[transitionIndex]);
             if (transMatch) {
               storyObj['scenes'][lastScene]['transitions'][transMatch[1]] = transMatch[2];
@@ -132,7 +147,7 @@ function parseStory (story) {
           storyObj[currentState.toLowerCase()] = currentText;
           break;
         default:
-          if (currentState === '' || currentState === 'THE END') break;
+          if (currentState === '') break;
           // Probably a number, hold it.
           if (!isNaN(currentState)) {
             storyObj['scenes'][currentState] = {
@@ -154,7 +169,6 @@ function parseStory (story) {
       currentText = (currentText === '' ? line : currentText + '\n' + line);
     }
   }
-  console.log(storyObj);
   return storyObj;
 }
 
