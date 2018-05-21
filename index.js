@@ -35,23 +35,28 @@ bot.on('message', function (message) {
 });
 
 bot.on('messageReactionAdd', function (messageReaction, user) {
+  console.log(messageReaction.emoji.name);
   var message = messageReaction.message;
   var channelID = message.channel.id.toString();
   if (channelID in listeningTo) {
     var channelInfo = listeningTo[channelID];
     if (channelInfo['messageId'] === message.id) {
-      if (channelInfo['storyInFocus'] !== null && channelInfo['sceneInFocus'] === null && !user.bot) {
-        if (messageReaction.emoji.name === '🙆') {
-          channelInfo['sceneInFocus'] = '1';
-          message.channel.send(tr.lki + channelInfo['storyInFocus']['scenes']['1']['story']).then(function (message) {
-            channelInfo['messageId'] = message.id;
-          });
-        } else if (messageReaction.emoji.name === '🙅') {
-          channelInfo['messageId'] = null;
-          channelInfo['storyInFocus'] = null;
-          message.channel.send(tr.naw).then(function (message) {
-            message.channel.send(printStories(stories));
-          });
+      if (channelInfo['storyInFocus'] !== null && !user.bot) {
+        if (channelInfo['sceneInFocus'] === null) {
+          if (messageReaction.emoji.name === '🙆') {
+            channelInfo['sceneInFocus'] = '1';
+            message.channel.send(tr.lki + channelInfo['storyInFocus']['scenes']['1']['story']).then(function (message) {
+              channelInfo['messageId'] = message.id;
+            });
+          } else if (messageReaction.emoji.name === '🙅') {
+            channelInfo['messageId'] = null;
+            channelInfo['storyInFocus'] = null;
+            message.channel.send(tr.naw).then(function (message) {
+              message.channel.send(printStories(stories));
+            });
+          }
+        } else {
+          // Pass
         }
       }
     }
@@ -78,7 +83,7 @@ function getStories (dir) {
     var filename = dir + '/' + story;
     if (!fs.statSync(filename).isDirectory()) {
       var contents = fs.readFileSync(filename, 'utf8');
-      stories.push(parseStory(contents))
+      stories.push(parseStory(contents));
     }
   }
   return stories;
