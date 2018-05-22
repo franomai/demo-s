@@ -65,9 +65,20 @@ bot.on('messageReactionAdd', function (messageReaction, user) {
             channelInfo['sceneInFocus'] = nextScene;
             var nextAttachments = channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['image'] ? { file: channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['image'] } : {};
             message.channel.send(channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['story'], nextAttachments).then(function (message) {
-              channelInfo['messageId'] = message.id;
-              var emojis = Object.keys(channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['transitions']);
-              addReactions(message, emojis);
+              if (channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['ending']) {
+                channelInfo = {
+                  messageId: null,
+                  storyInFocus: null,
+                  sceneInFocus: null
+                }; // hard reset
+                message.channel.send(tr.itsova).then(function (message) {
+                  message.channel.send(printStories(stories));
+                });
+              } else {
+                channelInfo['messageId'] = message.id;
+                var emojis = Object.keys(channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['transitions']);
+                addReactions(message, emojis);
+              }
             });
           }
         }
@@ -151,7 +162,9 @@ function parseStory (story) {
           break;
         case 'IMAGE':
           storyObj['scenes'][lastScene][currentState.toLowerCase()] = currentText;
-          console.log(currentText);
+          break;
+        case 'ENDING':
+          storyObj['scenes'][lastScene]['ending'] = true;
           break;
         case 'DESCRIPTION':
           storyObj[currentState.toLowerCase()] = currentText;
@@ -162,7 +175,8 @@ function parseStory (story) {
           if (!isNaN(currentState)) {
             storyObj['scenes'][currentState] = {
               story: currentText,
-              transitions: {}
+              transitions: {},
+              ending: false
             };
             lastScene = currentState;
           } else {
