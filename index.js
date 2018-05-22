@@ -66,7 +66,7 @@ bot.on('messageReactionAdd', function (messageReaction, user) {
             var nextAttachments = channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['image'] ? { file: channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['image'] } : {};
             message.channel.send(channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['story'], nextAttachments).then(function (message) {
               if (channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['ending']) {
-                channelInfo = {
+                listeningTo[channelID] = {
                   messageId: null,
                   storyInFocus: null,
                   sceneInFocus: null
