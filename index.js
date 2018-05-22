@@ -25,8 +25,9 @@ bot.on('message', function (message) {
         // Fetch!
         channelInfo['storyInFocus'] = stories[value - 1];
         message.channel.send(tr.giveDescription + channelInfo['storyInFocus'].description + '\n' + tr.wbu).then(function (message) {
-          message.react('🙆');
-          message.react('🙅');
+          message.react('🙆').then(function (messageReaction) {
+            message.react('🙅');
+          });
           channelInfo['messageId'] = message.id;
         });
       }
@@ -44,12 +45,11 @@ bot.on('messageReactionAdd', function (messageReaction, user) {
         if (channelInfo['sceneInFocus'] === null) {
           if (messageReaction.emoji.name === '🙆') {
             channelInfo['sceneInFocus'] = '1';
-            message.channel.send(tr.lki + channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['story']).then(function (message) {
+            var attachments = channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['image'] ? { file: channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['image'].trim() } : {};
+            message.channel.send(tr.lki + channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['story'], attachments).then(function (message) {
               channelInfo['messageId'] = message.id;
               var emojis = Object.keys(channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['transitions']);
-              for (var i = 0; i < emojis.length; i++) {
-                message.react(emojis[i]);
-              }
+              addReactions(message, emojis);
             });
           } else if (messageReaction.emoji.name === '🙅') {
             channelInfo['messageId'] = null;
@@ -63,12 +63,11 @@ bot.on('messageReactionAdd', function (messageReaction, user) {
           if (nextScene) {
             // Match found, go there
             channelInfo['sceneInFocus'] = nextScene;
-            message.channel.send(channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['story']).then(function (message) {
+            var nextAttachments = channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['image'] ? { file: channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['image'] } : {};
+            message.channel.send(channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['story'], nextAttachments).then(function (message) {
               channelInfo['messageId'] = message.id;
               var emojis = Object.keys(channelInfo['storyInFocus']['scenes'][channelInfo['sceneInFocus']]['transitions']);
-              for (var i = 0; i < emojis.length; i++) {
-                message.react(emojis[i]);
-              }
+              addReactions(message, emojis);
             });
           }
         }
@@ -76,6 +75,13 @@ bot.on('messageReactionAdd', function (messageReaction, user) {
     }
   }
 });
+
+function addReactions (message, reactionsArray) {
+  if (reactionsArray.length === 0) return;
+  message.react(reactionsArray.shift()).then(function (messageReaction) {
+    addReactions(messageReaction.message, reactionsArray);
+  });
+}
 
 function printStories (stories) {
   var msg = '';
@@ -137,11 +143,15 @@ function parseStory (story) {
             if (transMatch) {
               storyObj['scenes'][lastScene]['transitions'][transMatch[1]] = transMatch[2];
             } else {
-              if (line !== '') {
-                console.error('Transition ' + line + ' not compliant!');
+              if (transitions[transitionIndex] !== '') {
+                console.error('Transition ' + transitions[transitionIndex] + ' not compliant!');
               };
             }
           }
+          break;
+        case 'IMAGE':
+          storyObj['scenes'][lastScene][currentState.toLowerCase()] = currentText;
+          console.log(currentText);
           break;
         case 'DESCRIPTION':
           storyObj[currentState.toLowerCase()] = currentText;
@@ -178,7 +188,7 @@ function determineState (line) {
     return parseInt(line);
   }
   // Use this for reading in state swaps from comments
-  var stateDeclareRegex = /\/\/\s*((?:\w+\s*)*)/g;
+  var stateDeclareRegex = /^\/\/\s*((?:\w+\s*)*)$/g;
   var match = stateDeclareRegex.exec(line);
   return match === null ? 'NO STATE' : match[1].trim().toUpperCase();
 }
